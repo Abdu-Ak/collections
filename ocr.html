@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Simple OCR with Tesseract.js</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #f0f0f0;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+    }
+    .container {
+        max-width: 600px;
+        padding: 30px;
+        background-color: #fff;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        text-align: center;
+    }
+    h1 {
+        margin-bottom: 30px;
+        color: #333;
+    }
+    #fileInput {
+        display: none;
+    }
+    #uploadBtn {
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    #uploadBtn:hover {
+        background-color: #0056b3;
+    }
+    #previewContainer {
+        display: none;
+        margin-top: 20px;
+    }
+    #preview {
+        max-width: 100%;
+        max-height: 300px;
+        border-radius: 10px;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+    #submitBtn {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #4caf50;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    #submitBtn:hover {
+        background-color: #388e3c;
+    }
+    #extractedText {
+        margin-top: 20px;
+        width: 100%;
+        height: 200px;
+        padding: 10px;
+        box-sizing: border-box;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        resize: none;
+    }
+    .error-message {
+        color: red;
+        margin-top: 10px;
+    }
+    .loading-indicator {
+        display: none;
+        margin-top: 20px;
+    }
+    #clearBtn {
+        margin-top: 20px;
+        padding: 10px 20px;
+        background-color: #ff6b6b;
+        color: #fff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+    #clearBtn:hover {
+        background-color: #ff5252;
+    }
+</style>
+</head>
+<body>
+    <div class="container">
+        <h1>Simple OCR with Tesseract.js</h1>
+        <label for="fileInput" id="uploadBtn">Upload Image</label>
+        <input type="file" id="fileInput">
+        <div id="previewContainer">
+            <img id="preview" src="#" alt="Preview Image">
+        </div>
+        <button id="submitBtn">Extract Text</button>
+        <textarea id="extractedText" rows="10" cols="50" placeholder="Extracted Text"></textarea>
+        <span id="errorMessage" class="error-message"></span>
+        <div id="loadingIndicator" class="loading-indicator">
+           Loading ...
+        </div>
+        <button id="clearBtn">Clear</button>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js"></script>
+<script>
+    document.getElementById('fileInput').addEventListener('change', handleFileInputChange);
+    document.getElementById('submitBtn').addEventListener('click', handleExtractText);
+    document.getElementById('clearBtn').addEventListener('click', handleClear);
+
+    function handleFileInputChange(event) {
+        const file = event.target.files[0];
+        
+        if (!file || !file.type.startsWith('image/')) {
+            showError('Please select a valid image file.');
+            return;
+        }
+
+        clearError();
+        displayImagePreview(file);
+    }
+
+    function displayImagePreview(file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = document.getElementById('preview');
+            img.src = event.target.result;
+            document.getElementById('previewContainer').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function handleExtractText() {
+        const img = document.getElementById('preview');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        
+        loadingIndicator.style.display = 'block';
+        
+        Tesseract.recognize(
+            img.src,
+            'eng',
+            { logger: m => console.log(m) }
+        ).then(({ data: { text } }) => {
+            document.getElementById('extractedText').value = text;
+            loadingIndicator.style.display = 'none';
+        }).catch(error => {
+            showError('Error occurred during OCR processing.');
+            loadingIndicator.style.display = 'none';
+        });
+    }
+
+    function handleClear() {
+        document.getElementById('preview').src = '';
+        document.getElementById('previewContainer').style.display = 'none';
+        document.getElementById('extractedText').value = '';
+        clearError();
+    }
+
+    function showError(message) {
+        document.getElementById('errorMessage').textContent = message;
+    }
+
+    function clearError() {
+        document.getElementById('errorMessage').textContent = '';
+    }
+</script>
+</body>
+</html>
